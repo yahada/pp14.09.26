@@ -13,6 +13,7 @@ namespace malashenko
   {
     return std::accumulate(nums.begin() + start, nums.begin() + end, 0);
   }
+
 }
 
 int main(int argc, char** argv)
@@ -34,39 +35,45 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  if (amountOfStreams == 0)
+  {
+    std::cerr << "Amount of streams must be greater than zero\n";
+    return 1;
+  }
+
   constexpr size_t size{1'000'000'000};
   double init{0}, total{0};
   using namespace malashenko;
   value_t sum{0};
+
   {
   data_t values(size, 1);
-  malashenko::Clicker cl;
-
+  Clicker cl;
 
   size_t part_size = size / amountOfStreams;
   size_t current_pos = 0;
   std::vector< std::future< value_t > > tasks;
 
   init = cl.millisec();
-  std::cout << "start of calcs\n";
+
+  std::cout << "Start of calculation\n";
   for (size_t i = 0; i < amountOfStreams - 1; ++i)
   {
-    auto task = std::async(std::launch::async, partitial_sum, values, current_pos, current_pos + part_size);
+    auto task = std::async(std::launch::async, partitial_sum, std::cref(values), current_pos, current_pos + part_size);
     current_pos += part_size;
 
     tasks.emplace_back(std::move(task));
   }
-  auto finalTask = std::async(std::launch::async, partitial_sum, values, current_pos, size);
+  auto finalTask = std::async(std::launch::async, partitial_sum, std::cref(values), current_pos, size);
   tasks.emplace_back(std::move(finalTask));
 
-  value_t res = 0;
+  value_t res{0};
   for (size_t i = 0; i < amountOfStreams; ++i)
   {
     res += tasks[i].get();
   }
-  total = cl.millisec();
 
-  std::cout << "Result: " << res << '\n';
-  std::cout << total << '\n';
+  total = cl.millisec();
+  std::cout << "End of calculation. Time: " << total << '\n';
   }
 }
