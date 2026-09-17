@@ -59,13 +59,12 @@ int main(int argc, char** argv)
   std::cout << "Start of calculation\n";
   for (size_t i = 0; i < amountOfStreams - 1; ++i)
   {
-    auto task = std::async(std::launch::async, partitial_sum, std::cref(values), current_pos, current_pos + part_size);
+    size_t begin = current_pos;
+    size_t end = current_pos + part_size;
+    tasks.emplace_back(std::async(std::launch::async, partitial_sum, std::cref(values), begin, end));
     current_pos += part_size;
-
-    tasks.emplace_back(std::move(task));
   }
-  auto finalTask = std::async(std::launch::async, partitial_sum, std::cref(values), current_pos, size);
-  tasks.emplace_back(std::move(finalTask));
+  tasks.emplace_back(std::async(std::launch::async, partitial_sum, std::cref(values), current_pos, size));
 
   value_t res{0};
   for (size_t i = 0; i < amountOfStreams; ++i)
